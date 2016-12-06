@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import autoMapper.exceptions.CommonSuperClassException;
 import autoMapper.exceptions.UndefinedMethodException;
@@ -20,7 +22,8 @@ import autoMapper.exceptions.UndefinedMethodException;
  */
 public class Mapper<F, T> {
 
-	private boolean findCommon;
+	private Map<Method, Method> getterSetter;
+	private Class<T> toClass;
 
 	/**
 	 * Constructor which must have specified if while mapping to look for a
@@ -29,8 +32,95 @@ public class Mapper<F, T> {
 	 * @param findCommon
 	 *            specify if the common parent of the two classes is to be found
 	 */
-	public Mapper(boolean findCommon) {
-		this.findCommon = findCommon;
+	public Mapper(boolean findCommon, Class<F> from, Class<T> to) {
+		this.toClass = to;
+
+		getterSetter = new ConcurrentHashMap<>();
+
+		if (findCommon) {
+			mapCommon(from, to);
+		} else {
+			mapDifferent(from, to);
+		}
+	}
+
+	private void mapCommon(Class<F> from, Class<T> to) {
+		Class<?> common = getCommonParrent(from.getClass(), to.getClass());
+		List<Field> commonFields = Arrays.asList(common.getDeclaredFields());
+
+		saveFields(from, to, commonFields);
+	}
+
+	private void mapDifferent(Class<F> from, Class<T> to) {
+		List<Field> fromFields = getAllFields(from);
+		List<Field> toFields = getAllFields(to);
+		List<Field> commonFields = new ArrayList<Field>();
+
+		List<Field> maxFields, minFields;
+		if (fromFields.size() < toFields.size()) {
+			maxFields = toFields;
+			minFields = fromFields;
+		} else {
+			maxFields = fromFields;
+			minFields = toFields;
+		}
+
+		for (Field i : maxFields) {
+			for (Field j : minFields) {
+				if (i.getName().equals(j.getName())) {
+					commonFields.add(i);
+				}
+			}
+		}
+
+		saveFields(from, to, commonFields);
+	}
+	
+	public void saveFields(Class<F> from, Class<T> to, List<Field> fields) {
+		for (Field field : fields) {
+			try {
+				Method getter = getterForField(field, from);
+				Method setter = setterForField(field, to);
+
+				getterSetter.put(getter, setter);
+			} catch (UndefinedMethodException ignore) {
+				//this means that the field does not have a getter or a setter and will not be mapped;
+			}
+		}
+	}
+
+	private Method getterForField(Field field, Class<?> clazz) {
+		for (Method method : clazz.getMethods()) {
+			if ((method.getName().startsWith("get"))
+					&& (method.getName().length() == (field.getName().length() + 3))) {
+				if (method.getName().toLowerCase()
+						.endsWith(field.getName().toLowerCase())) {
+					return method;
+				}
+			} else if ((method.getName().startsWith("is"))
+					&& (method.getName().length() == (field.getName().length() + 2))) {
+				if (method.getName().toLowerCase()
+						.endsWith(field.getName().toLowerCase())) {
+					return method;
+				}
+			}
+		}
+
+		throw new UndefinedMethodException();
+	}
+
+	private Method setterForField(Field field, Class<?> clazz) {
+		for (Method method : clazz.getMethods()) {
+			if ((method.getName().startsWith("set"))
+					&& (method.getName().length() == (field.getName().length() + 3))) {
+				if (method.getName().toLowerCase()
+						.endsWith(field.getName().toLowerCase())) {
+					return method;
+				}
+			}
+		}
+
+		throw new UndefinedMethodException();
 	}
 
 	/**
@@ -41,9 +131,6 @@ public class Mapper<F, T> {
 	 *            boolean which specifies if the mapping should look for a
 	 *            common class
 	 */
-	public void setFindCommon(boolean findCommon) {
-		this.findCommon = findCommon;
-	}
 
 	/**
 	 * This methods maps the values from one type of object to another type of
@@ -63,20 +150,22 @@ public class Mapper<F, T> {
 	 *            the class which you want your values mapped
 	 * @return the object which has the values set
 	 */
-	public T map(F from, Class<T> toType) {
+	public T map(F from) {
 
 		try {
-			T to = toType.newInstance();
+			T to = toClass.newInstance();
 
-			if (findCommon) {
-				mapCommon(from, to, toType);
-			} else {
-				mapDifferent(from, to);
+			for (Method getter : getterSetter.keySet()) {
+				Method setter = getterSetter.get(getter);
+
+				Object result = getter.invoke(from);
+
+				setter.invoke(to, result);
 			}
-
 			return to;
 		} catch (InstantiationException | IllegalAccessException
-				| SecurityException e) {
+				| SecurityException | IllegalArgumentException
+				| InvocationTargetException e) {
 			e.printStackTrace();
 		}
 
@@ -102,80 +191,27 @@ public class Mapper<F, T> {
 	 *            the class which you want your values mapped
 	 * @return a list of objects which have the values set
 	 */
-	public List<T> map(List<F> from, Class<T> to) {
+	public List<T> map(List<F> from) {
 		List<T> t = new ArrayList<>();
 
 		for (F f : from) {
-			t.add(map(f, to));
+			t.add(map(f));
 		}
 
 		return t;
 	}
 
 	/**
-	 * 
-	 * @param from
-	 * @param to
-	 * @param toType
-	 */
-	private void mapCommon(F from, T to, Class<T> toType) {
-		Class<?> common = getCommonParrent(from.getClass(), toType);
-		List<Field> fields = Arrays.asList(common.getDeclaredFields());
-
-		mapAttributes(from, to, fields);
-	}
-
-	/**
-	 * 
-	 * @param from
-	 * @param to
-	 */
-	private void mapDifferent(F from, T to) {
-		List<Field> fromFields = getAllFields(from);
-		List<Field> toFields = getAllFields(to);
-		List<Field> commonFields = new ArrayList<Field>();
-
-		List<Field> maxFields, minFields;
-		if (fromFields.size() < toFields.size()) {
-			maxFields = toFields;
-			minFields = fromFields;
-		} else {
-			maxFields = fromFields;
-			minFields = toFields;
-		}
-
-		for (Field i : maxFields) {
-			for (Field j : minFields) {
-				if (i.getName().equals(j.getName())) {
-					commonFields.add(i);
-					break;
-				}
-			}
-		}
-
-		mapAttributes(from, to, commonFields);
-	}
-
-	private void mapAttributes(F from, T to, List<Field> commonFields) {
-		for (int i = 0; i < commonFields.size(); i++) {
-			Object value = runGetter(commonFields.get(i), from);
-
-			runSetter(commonFields.get(i), to, value);
-		}
-	}
-
-	/**
 	 * It returns all the objects fields, from its class and all its
-	 * superclasses except the Object class
+	 * Superclass's except the Object class
 	 * 
 	 * @param o
 	 *            object from which the fields to be returned
 	 * @return the list of fields of the givven object
 	 */
-	private List<Field> getAllFields(Object o) {
+	private List<Field> getAllFields(Class<?> clazz) {
 		List<Field> fields = new ArrayList<>();
 
-		Class<?> clazz = o.getClass();
 		while (clazz != Object.class) {
 			fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
 			clazz = clazz.getSuperclass();
@@ -210,101 +246,4 @@ public class Mapper<F, T> {
 		return getCommonParrent(from.getSuperclass(), to.getSuperclass());
 	}
 
-	/**
-	 * The method finds the getter for a given field and invokes it's
-	 * appropriate getter
-	 * 
-	 * @throws IllegalAccessException
-	 *             when the class on which this is invoked it does not have the
-	 *             public modifier
-	 * @throws InvocationTargetException
-	 *             when the methods from the class could not be invoked
-	 * @throws UndefinedMethodException
-	 *             when there does not exist a getter for the given field
-	 * 
-	 * @param field
-	 *            finds the getter for the given field and invokes it, thus
-	 *            getting the value
-	 * @param o
-	 *            the object on which the looking for the getter method will be
-	 *            run
-	 * @return the value that is obtained after invoking the getter
-	 */
-	private Object runGetter(Field field, F o) {
-		for (Method method : o.getClass().getMethods()) {
-			if ((method.getName().startsWith("get"))
-					&& (method.getName().length() == (field.getName().length() + 3))) {
-				if (method.getName().toLowerCase()
-						.endsWith(field.getName().toLowerCase())) {
-					try {
-						return method.invoke(o);
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-					}
-
-				}
-			} else if ((method.getName().startsWith("is"))
-					&& (method.getName().length() == (field.getName().length() + 2))) {
-				if (method.getName().toLowerCase()
-						.endsWith(field.getName().toLowerCase())) {
-					try {
-						return method.invoke(o);
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-					}
-
-				}
-			}
-		}
-
-		throw new UndefinedMethodException();
-	}
-
-	/**
-	 * The method finds the setter for a given field and invokes it's
-	 * appropriate setter
-	 * 
-	 * @throws IllegalAccessException
-	 *             when the class on which this is invoked it does not have the
-	 *             public modifier
-	 * @throws InvocationTargetException
-	 *             when the methods from the class could not be invoked
-	 * @throws UndefinedMethodException
-	 *             when there does not exist a getter for the given field
-	 * 
-	 * @param field
-	 *            finds the setter for the given field and invokes it giving the
-	 *            value, thus setting the value
-	 * @param o
-	 *            the object on which the looking for the setter method will be
-	 *            run
-	 * @param value
-	 *            the value that will be given to the setter value
-	 */
-	private void runSetter(Field field, T o, Object value) {
-		for (Method method : o.getClass().getMethods()) {
-			if ((method.getName().startsWith("set"))
-					&& (method.getName().length() == (field.getName().length() + 3))) {
-				if (method.getName().toLowerCase()
-						.endsWith(field.getName().toLowerCase())) {
-					try {
-						method.invoke(o, value);
-
-						return;
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-					}
-
-				}
-			}
-		}
-
-		throw new UndefinedMethodException();
-	}
 }

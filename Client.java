@@ -1,22 +1,31 @@
+import autoMapper.AutoMapper;
+import autoMapper.Mapper;
 import autoMapper.TypeMap;
-
 
 public class Client {
 
 	public static void main(String[] args) {
-		TypeMap tp = TypeMap.getInstance();
-		tp.addType(B.class, A.class, false);
+		AutoMapper mapper = AutoMapper.getInstance();
+		mapper.addMapping(A.class, C.class);
+		
+		A a = new A();
+		a.setX(3);
+		a.setY(10);
+		
+		C c = new C();
+		c.setX(2);
+		c.setY(1);
+		
+		c = mapper.map(a);
+		
+		System.out.println(c.getX());
+		System.out.println(c.getY());
 	}
 
 }
 
-class A{
-	public Object get() {
-		return this;
-	}
-	public Integer getInt() {
-		return new Integer(0);
-	}
+
+
+class B extends A {
 }
-class B extends A{}
 
