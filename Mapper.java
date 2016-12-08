@@ -1,4 +1,4 @@
-package autoMapper;
+package autoMapper.mapper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -9,8 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import autoMapper.annotations.Ignore;
 import autoMapper.exceptions.CommonSuperClassException;
 import autoMapper.exceptions.UndefinedMethodException;
+import autoMapper.exceptions.UnmappedType;
+import autoMapper.mapperInterface.TypeMap;
+import autoMapper.utilities.Utilities;
 
 /**
  * Handles mapping values from one class to the other
@@ -46,8 +50,17 @@ public class Mapper<F, T> {
 
 	private void mapCommon(Class<F> from, Class<T> to) {
 		Class<?> common = getCommonParrent(from.getClass(), to.getClass());
-		List<Field> commonFields = Arrays.asList(common.getDeclaredFields());
-
+		List<Field> fields = Arrays.asList(common.getDeclaredFields());
+		List<Field> commonFields = new ArrayList<>();
+		
+		for(Field field: fields) {
+			if(field.getAnnotation(Ignore.class) != null) {
+				continue;
+			}
+			
+			commonFields.add(field);
+		}
+		
 		saveFields(from, to, commonFields);
 	}
 
@@ -68,6 +81,10 @@ public class Mapper<F, T> {
 		for (Field i : maxFields) {
 			for (Field j : minFields) {
 				if (i.getName().equals(j.getName())) {
+					if(i.getAnnotation(Ignore.class) != null || j.getAnnotation(Ignore.class) != null) {
+						continue;
+					}
+					
 					commonFields.add(i);
 				}
 			}
@@ -159,8 +176,17 @@ public class Mapper<F, T> {
 				Method setter = getterSetter.get(getter);
 
 				Object result = getter.invoke(from);
-
-				setter.invoke(to, result);
+				if(Utilities.isPrimitive(result.getClass())){
+					setter.invoke(to, result);
+				} else {
+					Mapper<Object, ? extends Object> mapper = TypeMap.getInstance().getMapper(result.getClass());
+					
+					if(mapper == null) {
+						throw new UnmappedType();
+					}
+					
+					setter.invoke(to, mapper.map(result));
+				}
 			}
 			return to;
 		} catch (InstantiationException | IllegalAccessException

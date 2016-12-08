@@ -1,4 +1,7 @@
-package autoMapper;
+package autoMapper.mapperInterface;
+
+import autoMapper.exceptions.UnmappedType;
+import autoMapper.mapper.Mapper;
 
 
 public class AutoMapper {
@@ -17,12 +20,17 @@ public class AutoMapper {
 		return instance;
 	}
 	
-	public<F,T> void addMapping(Class<F> from, Class<T> to) {
-		typeMap.addType(from, to, false, false);
+	public<F,T> void addMapping(Class<F> from, Class<T> to, boolean mapBothways, boolean findCommonSuper) {
+		typeMap.addType(from, to, mapBothways, findCommonSuper);
 	}
 
 	@SuppressWarnings("unchecked")
 	public<F,T> T map(F from) {
-		return (T) (typeMap.getMapper(from.getClass())).map(from);
+		Mapper<F,T> mapper = (Mapper<F, T>) typeMap.getMapper(from.getClass());
+		if(mapper == null) {
+			throw new UnmappedType();
+		}
+		
+		return mapper.map(from);
 	}
 }

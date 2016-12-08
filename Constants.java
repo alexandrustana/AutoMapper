@@ -1,4 +1,4 @@
-package autoMapper;
+package autoMapper.utilities;
 
 import java.sql.Date;
 import java.util.ArrayList;
@@ -14,10 +14,14 @@ public class Constants {
 		primitiveTypes.add(Date.class);
 		primitiveTypes.add(Integer.class);
 		primitiveTypes.add(Double.class);
+		primitiveTypes.add(Float.class);
 		primitiveTypes.add(Character.class);
+		primitiveTypes.add(Boolean.class);
 		primitiveTypes.add(Long.class);
 		primitiveTypes.add(Short.class);
 		primitiveTypes.add(Byte.class);
 		primitiveTypes.add(String.class);
 	}
+	
+	
 }
