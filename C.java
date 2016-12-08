@@ -1,4 +1,14 @@
+import autoMapper.annotations.Ignore;
+
 public class C {
+	public B getB() {
+		return b;
+	}
+
+	public void setB(B b) {
+		this.b = b;
+	}
+
 	public int getY() {
 		return y;
 	}
@@ -15,7 +25,9 @@ public class C {
 		this.x = x;
 	}
 
+	@Ignore
 	private int x;
-	private int y;
 
+	private int y;
+	private B b;
 }
