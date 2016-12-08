@@ -1,4 +1,12 @@
 public class B {
+	public A getA() {
+		return a;
+	}
+
+	public void setA(A a) {
+		this.a = a;
+	}
+
 	public D getD() {
 		return d;
 	}
@@ -17,4 +25,5 @@ public class B {
 
 	private int z;
 	private D d;
+	private A a;
 }

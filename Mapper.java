@@ -5,8 +5,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import autoMapper.annotations.Ignore;
@@ -27,6 +29,7 @@ import autoMapper.utilities.Utilities;
 public class Mapper<F, T> {
 
 	private Map<Method, Method> getterSetter;
+	private static Set<Class<?>> history;
 	private Class<T> toClass;
 
 	/**
@@ -38,6 +41,10 @@ public class Mapper<F, T> {
 	 */
 	public Mapper(boolean findCommon, Class<F> from, Class<T> to) {
 		this.toClass = to;
+
+		if (history == null) {
+			history = new HashSet<>();
+		}
 
 		getterSetter = new ConcurrentHashMap<>();
 
@@ -52,15 +59,15 @@ public class Mapper<F, T> {
 		Class<?> common = getCommonParrent(from.getClass(), to.getClass());
 		List<Field> fields = Arrays.asList(common.getDeclaredFields());
 		List<Field> commonFields = new ArrayList<>();
-		
-		for(Field field: fields) {
-			if(field.getAnnotation(Ignore.class) != null) {
+
+		for (Field field : fields) {
+			if (field.getAnnotation(Ignore.class) != null) {
 				continue;
 			}
-			
+
 			commonFields.add(field);
 		}
-		
+
 		saveFields(from, to, commonFields);
 	}
 
@@ -81,10 +88,11 @@ public class Mapper<F, T> {
 		for (Field i : maxFields) {
 			for (Field j : minFields) {
 				if (i.getName().equals(j.getName())) {
-					if(i.getAnnotation(Ignore.class) != null || j.getAnnotation(Ignore.class) != null) {
+					if (i.getAnnotation(Ignore.class) != null
+							|| j.getAnnotation(Ignore.class) != null) {
 						continue;
 					}
-					
+
 					commonFields.add(i);
 				}
 			}
@@ -92,7 +100,7 @@ public class Mapper<F, T> {
 
 		saveFields(from, to, commonFields);
 	}
-	
+
 	public void saveFields(Class<F> from, Class<T> to, List<Field> fields) {
 		for (Field field : fields) {
 			try {
@@ -101,7 +109,8 @@ public class Mapper<F, T> {
 
 				getterSetter.put(getter, setter);
 			} catch (UndefinedMethodException ignore) {
-				//this means that the field does not have a getter or a setter and will not be mapped;
+				// this means that the field does not have a getter or a setter
+				// and will not be mapped;
 			}
 		}
 	}
@@ -171,20 +180,27 @@ public class Mapper<F, T> {
 
 		try {
 			T to = toClass.newInstance();
-
+			
+			if(history.contains(toClass)) {
+				return null;
+			}
+			
+			history.add(toClass);
+			
 			for (Method getter : getterSetter.keySet()) {
 				Method setter = getterSetter.get(getter);
 
 				Object result = getter.invoke(from);
-				if(Utilities.isPrimitive(result.getClass())){
+				if (Utilities.isPrimitive(result.getClass())) {
 					setter.invoke(to, result);
 				} else {
-					Mapper<Object, ? extends Object> mapper = TypeMap.getInstance().getMapper(result.getClass());
-					
-					if(mapper == null) {
+					Mapper<Object, ? extends Object> mapper = TypeMap
+							.getInstance().getMapper(result.getClass());
+
+					if (mapper == null) {
 						throw new UnmappedType();
 					}
-					
+
 					setter.invoke(to, mapper.map(result));
 				}
 			}
@@ -271,5 +287,8 @@ public class Mapper<F, T> {
 		}
 		return getCommonParrent(from.getSuperclass(), to.getSuperclass());
 	}
-
+	
+	public void emptyHistory() {
+		history.clear();
+	}
 }

@@ -13,6 +13,7 @@ public class Client {
 		a.setY(10);
 		
 		B b = new B();
+		b.setA(a);
 		b.setZ(20);
 		
 		D d = new D();

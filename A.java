@@ -30,7 +30,7 @@ public class A {
 
 	@Ignore
 	private int x;
-
+	
 	private int y;
 	
 	private B b;

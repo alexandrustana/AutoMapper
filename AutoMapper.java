@@ -30,6 +30,7 @@ public class AutoMapper {
 		if(mapper == null) {
 			throw new UnmappedType();
 		}
+		mapper.emptyHistory();
 		
 		return mapper.map(from);
 	}
