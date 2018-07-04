@@ -1,9 +1,5 @@
-package autoMapper.mapperInterface;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import autoMapper.mapper.Mapper;
 
 public class TypeMap {
 

@@ -1,4 +1,3 @@
-import autoMapper.mapperInterface.AutoMapper;
 
 public class Client {
 

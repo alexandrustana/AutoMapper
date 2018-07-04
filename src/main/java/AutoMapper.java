@@ -1,8 +1,3 @@
-package autoMapper.mapperInterface;
-
-import autoMapper.exceptions.UnmappedType;
-import autoMapper.mapper.Mapper;
-
 
 public class AutoMapper {
 

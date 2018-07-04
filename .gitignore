@@ -1,0 +1,50 @@
+# -----------------------------------------------------------------------------
+# Compiled sources
+# -----------------------------------------------------------------------------
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+
+# -----------------------------------------------------------------------------
+# OS generated files
+# -----------------------------------------------------------------------------
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# -----------------------------------------------------------------------------
+# IntelliJ IDEA
+# -----------------------------------------------------------------------------
+# *.iml = project modules (should be shared)
+# *.ipr = project related (should be shared)
+# *.iws = personal settings (should not be shared)
+# workspace.xml = personal workspace settings (should not be shared)
+# tasks.xml = personal tasks (should not be shared)
+*.iml
+*.iws
+*.releaseBackup
+.idea
+
+# -----------------------------------------------------------------------------
+# Eclipse files
+# -----------------------------------------------------------------------------
+.classpath
+.project
+.settings
+.cache
+.metadata
+
+# -----------------------------------------------------------------------------
+# Gradle generated files
+# -----------------------------------------------------------------------------
+.gradle
+/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+

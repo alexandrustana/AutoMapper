@@ -1,5 +1,3 @@
-package autoMapper.mapper;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,13 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import autoMapper.annotations.Ignore;
-import autoMapper.exceptions.CommonSuperClassException;
-import autoMapper.exceptions.UndefinedMethodException;
-import autoMapper.exceptions.UnmappedType;
-import autoMapper.mapperInterface.TypeMap;
-import autoMapper.utilities.Utilities;
 
 /**
  * Handles mapping values from one class to the other

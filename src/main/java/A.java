@@ -1,6 +1,4 @@
-import autoMapper.annotations.Ignore;
-
-public class C {
+public class A {
 	public B getB() {
 		return b;
 	}
@@ -25,9 +23,13 @@ public class C {
 		this.x = x;
 	}
 
+	public void draw() {
+	}
+
 	@Ignore
 	private int x;
-
+	
 	private int y;
+	
 	private B b;
 }
