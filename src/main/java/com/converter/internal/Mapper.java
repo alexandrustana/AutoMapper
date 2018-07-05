@@ -1,51 +1,47 @@
+package com.converter.internal;
+
+import com.converter.annotations.Ignore;
+import com.converter.exceptions.CommonSuperClassException;
+import com.converter.exceptions.UndefinedMethodException;
+import com.converter.exceptions.UnmappedType;
+import com.converter.internal.utils.Utilities;
 import com.lambdista.util.Try;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 /**
- * Handles mapping values from one class to the other
+ * Handles mapping properties from one class to the other
  *
- * @param <F> the abbreviation means From
- * @param <T> the abbreviation means To
+ * @param <F> From
+ * @param <T> To
  */
 public class Mapper<F, T> {
-
-    private        Map<Method, Method> getterSetter;
-    private static Set<Class<?>>       history;
-    private        Class<T>            toClass;
+    private        Map<String, Map<Method, Method>> map;
+    private        Map<Method, Method>              getterSetter;
+    private static Set<Class<?>>                    history;
+    private        Class<T>                         toClass;
 
     /**
-     * Constructor which must have specified if while mapping to look for a
-     * common super class
+     * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
      *
-     * @param findCommon specify if the common parent of the two classes is to be found
+     * @param findCommon specify if the mapping method should stop at the common parent or when it reaches the {@code Object} class
      */
     public Mapper(boolean findCommon, Class<F> from, Class<T> to) {
         this.toClass = to;
 
-        if (history == null) {
-            history = new HashSet<>();
-        }
-
-        getterSetter = new ConcurrentHashMap<>();
+        history = new HashSet<>();
+        getterSetter = new HashMap<>();
 
         if (findCommon) {
-            mapCommon(from, to);
+            common(from, to);
         } else {
-            mapDifferent(from, to);
+            different(from, to);
         }
     }
 
-    private void mapCommon(Class<F> from, Class<T> to) {
+    private void common(Class<F> from, Class<T> to) {
         Class<?>    common       = getCommonParrent(from.getClass(), to.getClass());
         List<Field> fields       = Arrays.asList(common.getDeclaredFields());
         List<Field> commonFields = new ArrayList<>();
@@ -61,7 +57,7 @@ public class Mapper<F, T> {
         saveFields(from, to, commonFields);
     }
 
-    private void mapDifferent(Class<F> from, Class<T> to) {
+    private void different(Class<F> from, Class<T> to) {
         List<Field> fromFields   = getAllFields(from);
         List<Field> toFields     = getAllFields(to);
         List<Field> commonFields = new ArrayList<Field>();
@@ -177,8 +173,7 @@ public class Mapper<F, T> {
                 if (Utilities.isPrimitive(result.getClass())) {
                     setter.invoke(to, result);
                 } else {
-                    Mapper<Object, ? extends Object> mapper = TypeMap
-                            .getInstance().getMapper(result.getClass());
+                    Mapper<Object, ?> mapper = TypeMap.getInstance().getMapper(result.getClass());
 
                     if (mapper == null) {
                         throw new UnmappedType();
@@ -219,7 +214,7 @@ public class Mapper<F, T> {
      * Superclass's except the Object class
      *
      * @param clazz object from which the fields to be returned
-     * @return the list of fields of the givven object
+     * @return the list of fields of the given object
      */
     private List<Field> getAllFields(Class<?> clazz) {
         List<Field> fields = new ArrayList<>();

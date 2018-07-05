@@ -1,3 +1,5 @@
+package com.converter.exceptions;
+
 public class UnmappedType extends RuntimeException{
 
 	private static final long serialVersionUID = 593299258126223292L;

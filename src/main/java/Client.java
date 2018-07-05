@@ -2,10 +2,10 @@
 public class Client {
 
 	public static void main(String[] args) {
-		AutoMapper mapper = AutoMapper.getInstance();
+		Converter mapper = Converter.getInstance();
 		mapper.addMapping(A.class, C.class, true, false);
-		mapper.addMapping(B.class, B.class, false, false);
-		mapper.addMapping(D.class, D.class, false, false);
+		mapper.addMapping(B.class, B.class);
+		mapper.addMapping(D.class, D.class);
 		
 		A a = new A();
 		a.setX(3);
