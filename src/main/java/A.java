@@ -26,7 +26,6 @@ public class A {
 	public void draw() {
 	}
 
-	@Ignore
 	private int x;
 	
 	private int y;

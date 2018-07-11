@@ -24,7 +24,6 @@ public class C {
 		this.x = x;
 	}
 
-	@Ignore
 	private int x;
 
 	private int y;

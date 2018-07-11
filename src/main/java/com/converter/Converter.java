@@ -1,3 +1,8 @@
+package com.converter;
+
+import com.converter.exceptions.UnmappedType;
+import com.converter.internal.Mapper;
+import com.converter.internal.TypeMap;
 
 public class Converter {
 
@@ -29,8 +34,6 @@ public class Converter {
         if (mapper == null) {
             throw new UnmappedType();
         }
-        mapper.emptyHistory();
-
         return mapper.map(from);
     }
 }

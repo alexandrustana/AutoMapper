@@ -1,16 +1,16 @@
 package com.converter.internal;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TypeMap {
 
-    private Map<Class<?>, Mapper<?, ?>> typeMapper;
+    private final Map<Class<?>, Mapper<?, ?>> typeMapper;
 
     private static TypeMap instance;
 
     private TypeMap() {
-        typeMapper = new ConcurrentHashMap<>();
+        typeMapper = new HashMap<>();
     }
 
     public static TypeMap getInstance() {

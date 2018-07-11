@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -23,10 +24,8 @@ import java.util.stream.Collectors;
  * @param <T> To
  */
 public class Mapper<F, T> {
-    private final  Map<String, Tuple<Method, Method>> map;
-    private final  Map<Method, Method>                getterSetter;
-    private static Set<Class<?>>                      history;
-    private        Class<T>                           toClass;
+    private final Map<Field, Tuple<Method, Method>> map;
+    private final Class<T>                          toClass;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
@@ -36,9 +35,6 @@ public class Mapper<F, T> {
     public Mapper(boolean findCommon, Class<F> from, Class<T> to) {
         this.toClass = to;
 
-        history = new HashSet<>();
-        getterSetter = new HashMap<>();
-
         if (findCommon) {
             map = common(from, to);
         } else {
@@ -46,7 +42,7 @@ public class Mapper<F, T> {
         }
     }
 
-    private Map<String, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
+    private Map<Field, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
         Class<?>    common       = parent(from.getClass(), to.getClass());
         List<Field> fields       = Arrays.asList(common.getDeclaredFields());
         List<Field> commonFields = fields.stream().filter(field -> field.getAnnotation(Ignore.class) == null).collect(Collectors.toList());
@@ -54,7 +50,7 @@ public class Mapper<F, T> {
         return properties(from, to, commonFields);
     }
 
-    private Map<String, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
+    private Map<Field, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
         Predicate<Field> isIgnored = field -> field.getAnnotation(Ignore.class) != null;
 
         List<Field> fromFields = getAllFields(from);
@@ -65,9 +61,10 @@ public class Mapper<F, T> {
                 .collect(Collectors.toList()));
     }
 
-    public Map<String, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<Field> fields) {
-        return fields.stream().collect(Collectors.toMap(Field::getName, field -> Tuple.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
-                                                                                             find(field, Arrays.asList(to.getMethods()), "set"))));
+    private Map<Field, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<Field> fields) {
+        return fields.stream().collect(Collectors.toMap(Function.identity(),
+                                                        field -> Tuple.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
+                                                                             find(field, Arrays.asList(to.getMethods()), "set"))));
     }
 
     private Method find(Field field, List<Method> methods, String... prefixes) {
@@ -107,31 +104,42 @@ public class Mapper<F, T> {
     public T map(F from) {
         return Try.apply(() -> {
             T to = toClass.getConstructor().newInstance();
-
             if (history.contains(toClass)) {
                 return null;
             }
             history.add(toClass);
 
-            for (Method getter : getterSetter.keySet()) {
-                Method setter = getterSetter.get(getter);
+            map.forEach((field, accessors) -> {
+                Method get = accessors._1;
+                Method set = accessors._2;
 
-                Object result = getter.invoke(from);
-                if (Utilities.isPrimitive(result.getClass())) {
-                    setter.invoke(to, result);
-                } else {
-                    Mapper<Object, ?> mapper = TypeMap.getInstance().getMapper(result.getClass());
+                Try.apply(() -> {
+                    Object value = get.invoke(from);
+                    if (Utilities.isPrimitive(value.getClass())) {
+                        set.invoke(to, value);
+                    } else {
+                        Mapper<Object, ?> mapper = TypeMap.getInstance().getMapper(value.getClass());
 
-                    if (mapper == null) {
-                        throw new UnmappedType();
+                        if (mapper == null) {
+                            throw new UnmappedType();
+                        }
+
+                        set.invoke(to, mapper.map(value));
                     }
-
-                    setter.invoke(to, mapper.map(result));
-                }
-            }
+                    return Void.TYPE;
+                }).get();
+            });
             return to;
+        }).transform(result -> {
+            history.clear();
+            return new Try.Success<>(result);
+        }, t -> {
+            history.clear();
+            throw new RuntimeException(t);
         }).get();
     }
+
+    private static Set<Class<?>> history = new HashSet<>();
 
     /**
      * This methods maps the values from one type of object to another type of
@@ -193,9 +201,5 @@ public class Mapper<F, T> {
             }
         }
         return Void.TYPE;
-    }
-
-    public void emptyHistory() {
-        history.clear();
     }
 }
