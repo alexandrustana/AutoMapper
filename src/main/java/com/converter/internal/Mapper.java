@@ -4,12 +4,17 @@ import com.converter.annotations.Ignore;
 import com.converter.exceptions.CommonSuperClassException;
 import com.converter.exceptions.UndefinedMethodException;
 import com.converter.exceptions.UnmappedType;
+import com.converter.internal.utils.TriPredicate;
+import com.converter.internal.utils.Tuple;
 import com.converter.internal.utils.Utilities;
 import com.lambdista.util.Try;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Handles mapping properties from one class to the other
@@ -18,10 +23,10 @@ import java.util.*;
  * @param <T> To
  */
 public class Mapper<F, T> {
-    private        Map<String, Map<Method, Method>> map;
-    private        Map<Method, Method>              getterSetter;
-    private static Set<Class<?>>                    history;
-    private        Class<T>                         toClass;
+    private final  Map<String, Tuple<Method, Method>> map;
+    private final  Map<Method, Method>                getterSetter;
+    private static Set<Class<?>>                      history;
+    private        Class<T>                           toClass;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
@@ -35,104 +40,47 @@ public class Mapper<F, T> {
         getterSetter = new HashMap<>();
 
         if (findCommon) {
-            common(from, to);
+            map = common(from, to);
         } else {
-            different(from, to);
+            map = different(from, to);
         }
     }
 
-    private void common(Class<F> from, Class<T> to) {
-        Class<?>    common       = getCommonParrent(from.getClass(), to.getClass());
+    private Map<String, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
+        Class<?>    common       = parent(from.getClass(), to.getClass());
         List<Field> fields       = Arrays.asList(common.getDeclaredFields());
-        List<Field> commonFields = new ArrayList<>();
+        List<Field> commonFields = fields.stream().filter(field -> field.getAnnotation(Ignore.class) == null).collect(Collectors.toList());
 
-        for (Field field : fields) {
-            if (field.getAnnotation(Ignore.class) != null) {
-                continue;
-            }
-
-            commonFields.add(field);
-        }
-
-        saveFields(from, to, commonFields);
+        return properties(from, to, commonFields);
     }
 
-    private void different(Class<F> from, Class<T> to) {
-        List<Field> fromFields   = getAllFields(from);
-        List<Field> toFields     = getAllFields(to);
-        List<Field> commonFields = new ArrayList<Field>();
+    private Map<String, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
+        Predicate<Field> isIgnored = field -> field.getAnnotation(Ignore.class) != null;
 
-        List<Field> maxFields, minFields;
-        if (fromFields.size() < toFields.size()) {
-            maxFields = toFields;
-            minFields = fromFields;
-        } else {
-            maxFields = fromFields;
-            minFields = toFields;
-        }
+        List<Field> fromFields = getAllFields(from);
+        List<Field> toFields   = getAllFields(to);
 
-        for (Field i : maxFields) {
-            for (Field j : minFields) {
-                if (i.getName().equals(j.getName())) {
-                    if (i.getAnnotation(Ignore.class) != null
-                            || j.getAnnotation(Ignore.class) != null) {
-                        continue;
-                    }
-
-                    commonFields.add(i);
-                }
-            }
-        }
-
-        saveFields(from, to, commonFields);
+        return properties(from, to, fromFields.stream()
+                .filter(f -> !isIgnored.test(f) && toFields.stream().anyMatch(t -> t.getName().equals(f.getName()) && !isIgnored.test(t)))
+                .collect(Collectors.toList()));
     }
 
-    public void saveFields(Class<F> from, Class<T> to, List<Field> fields) {
-        for (Field field : fields) {
-            try {
-                Method getter = getterForField(field, from);
-                Method setter = setterForField(field, to);
-
-                getterSetter.put(getter, setter);
-            } catch (UndefinedMethodException ignore) {
-                // this means that the field does not have a getter or a setter
-                // and will not be mapped;
-            }
-        }
+    public Map<String, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<Field> fields) {
+        return fields.stream().collect(Collectors.toMap(Field::getName, field -> Tuple.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
+                                                                                             find(field, Arrays.asList(to.getMethods()), "set"))));
     }
 
-    private Method getterForField(Field field, Class<?> clazz) {
-        for (Method method : clazz.getMethods()) {
-            if ((method.getName().startsWith("get"))
-                    && (method.getName().length() == (field.getName().length() + 3))) {
-                if (method.getName().toLowerCase()
-                        .endsWith(field.getName().toLowerCase())) {
-                    return method;
-                }
-            } else if ((method.getName().startsWith("is"))
-                    && (method.getName().length() == (field.getName().length() + 2))) {
-                if (method.getName().toLowerCase()
-                        .endsWith(field.getName().toLowerCase())) {
-                    return method;
-                }
-            }
-        }
+    private Method find(Field field, List<Method> methods, String... prefixes) {
+        BiPredicate<Method, String>         startsWith = (m, p) -> m.getName().startsWith(p);
+        TriPredicate<Field, Method, String> isAccessor = (f, m, p) -> m.getName().length() == (f.getName().length() + p.length()) && m.getName().toLowerCase().equals(f.getName().toLowerCase());
 
-        throw new UndefinedMethodException();
-    }
+        List<Method> result = methods
+                .stream()
+                .filter(method -> Arrays
+                        .stream(prefixes)
+                        .anyMatch(prefix -> startsWith.test(method, prefix) && isAccessor.test(field, method, prefix))).collect(Collectors.toList());
 
-    private Method setterForField(Field field, Class<?> clazz) {
-        for (Method method : clazz.getMethods()) {
-            if ((method.getName().startsWith("set"))
-                    && (method.getName().length() == (field.getName().length() + 3))) {
-                if (method.getName().toLowerCase()
-                        .endsWith(field.getName().toLowerCase())) {
-                    return method;
-                }
-            }
-        }
-
-        throw new UndefinedMethodException();
+        return result.get(0);
     }
 
     /**
@@ -163,7 +111,6 @@ public class Mapper<F, T> {
             if (history.contains(toClass)) {
                 return null;
             }
-
             history.add(toClass);
 
             for (Method getter : getterSetter.keySet()) {
@@ -232,21 +179,20 @@ public class Mapper<F, T> {
      *
      * @param from the class from which the values will be mapped
      * @param to   the class on which the values will be mapped
-     * @return the common super class for the two class
-     * @throws CommonSuperClassException when there is no common super class for the two classes,
-     *                                   other than the Object class
+     * @return the common super class for the two class, if there is no common super class then {@code Class<Void>} will be returned
      */
-    private Class<?> getCommonParrent(Class<?> from, Class<?> to) {
-        if (from.getCanonicalName().equals(to.getCanonicalName())) {
-            return to;
+    private Class<?> parent(Class<?> from, Class<?> to) {
+        if (from.equals(to)) {
+            return from;
+        } else if (!from.equals(Object.class) && !to.equals(Object.class)) {
+            Class<?> left = parent(from.getSuperclass(), to);
+            if (left.equals(Void.TYPE)) {
+                return parent(from, to.getSuperclass());
+            } else {
+                return left;
+            }
         }
-
-        if (from.getCanonicalName().equals(Object.class.getCanonicalName())
-                || to.getCanonicalName()
-                .equals(Object.class.getCanonicalName())) {
-            throw new CommonSuperClassException();
-        }
-        return getCommonParrent(from.getSuperclass(), to.getSuperclass());
+        return Void.TYPE;
     }
 
     public void emptyHistory() {
