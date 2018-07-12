@@ -69,13 +69,12 @@ public class Mapper<F, T> {
 
     private Method find(Field field, List<Method> methods, String... prefixes) {
         BiPredicate<Method, String>         startsWith = (m, p) -> m.getName().startsWith(p);
-        TriPredicate<Field, Method, String> isAccessor = (f, m, p) -> m.getName().length() == (f.getName().length() + p.length()) && m.getName().toLowerCase().equals(f.getName().toLowerCase());
+        TriPredicate<Field, Method, String> isAccessor = (f, m, p) -> m.getName().length() == (f.getName().length() + p.length()) && m.getName().toLowerCase().equals((p + f.getName()).toLowerCase());
 
-        List<Method> result = methods
-                .stream()
-                .filter(method -> Arrays
-                        .stream(prefixes)
-                        .anyMatch(prefix -> startsWith.test(method, prefix) && isAccessor.test(field, method, prefix))).collect(Collectors.toList());
+        List<Method> result = methods.stream()
+                .filter(method -> Arrays.stream(prefixes)
+                        .anyMatch(prefix -> startsWith.test(method, prefix) && isAccessor.test(field, method, prefix)))
+                .collect(Collectors.toList());
 
         return result.get(0);
     }
