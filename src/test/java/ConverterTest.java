@@ -10,8 +10,7 @@ import model.DModel;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Alexandru Stana, alexandru.stana@busymachines.com
@@ -37,11 +36,10 @@ public class ConverterTest {
         DDao dao = converter.map(model);
 
         assertEquals(model.getA(), dao.getA());
-        assertNotEquals(model, dao);
     }
 
     @Test
-    public void convertAModelToADao() {
+    public void convertAModelToADaoIgnoreB() {
         AModel model = new AModel();
         model.setX(1);
         model.setY(2);
@@ -50,6 +48,100 @@ public class ConverterTest {
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
-        assertNotEquals(model, dao);
+    }
+
+    @Test
+    public void convertAModelToADaoWithB() {
+        BModel b = new BModel();
+        b.setZ(3);
+
+        AModel model = new AModel();
+        model.setX(1);
+        model.setY(2);
+        model.setB(b);
+
+        ADao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+        assertEquals(model.getB().getZ(), dao.getB().getZ());
+    }
+
+    @Test
+    public void convertInfiniteRecursion() {
+        AModel model = new AModel();
+        model.setX(0);
+
+        BModel b = new BModel();
+
+        b.setA(model);
+        model.setB(b);
+
+        ADao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getB().getA().getB().getA().getX(), dao.getB().getA().getB().getA().getX());
+    }
+
+    @Test
+    public void convertAModelToADao() {
+        DModel d = new DModel();
+        d.setA(6);
+
+        AModel a = new AModel();
+        a.setY(4);
+        a.setX(5);
+
+        BModel b = new BModel();
+        b.setZ(3);
+        b.setA(a);
+        b.setD(d);
+
+        AModel model = new AModel();
+        model.setX(1);
+        model.setY(2);
+        model.setB(b);
+
+        ADao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+        assertEquals(model.getB().getZ(), dao.getB().getZ());
+        assertEquals(model.getB().getA().getX(), dao.getB().getA().getX());
+        assertEquals(model.getB().getA().getY(), dao.getB().getA().getY());
+        assertEquals(model.getB().getD().getA(), dao.getB().getD().getA());
+
+        assertNull(dao.getB().getA().getB());
+    }
+
+    @Test
+    public void convertCModelToCDao() {
+        CModel model = new CModel();
+        model.setX(1);
+        model.setY(2);
+
+        CDao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+    }
+
+    @Test
+    public void convertCModelToCDaoRecursive() {
+        CModel c = new CModel();
+        c.setY(3);
+        c.setX(4);
+
+        CModel model = new CModel();
+        model.setX(1);
+        model.setY(2);
+        model.setC(c);
+
+        CDao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+        assertEquals(model.getC().getX(), dao.getC().getX());
+        assertEquals(model.getC().getY(), dao.getC().getY());
     }
 }

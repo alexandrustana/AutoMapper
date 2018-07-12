@@ -7,7 +7,7 @@ package model;
 public class CModel {
     private int    x;
     private int    y;
-    private BModel b;
+    private CModel c;
 
     public int getX() {
         return x;
@@ -25,12 +25,12 @@ public class CModel {
         this.y = y;
     }
 
-    public BModel getB() {
-        return b;
+    public CModel getC() {
+        return c;
     }
 
-    public void setB(BModel b) {
-        this.b = b;
+    public void setC(CModel c) {
+        this.c = c;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CModel {
         return "CModel{" +
                 "x=" + x +
                 ", y=" + y +
-                ", b=" + b +
+                ", c=" + c +
                 '}';
     }
 }

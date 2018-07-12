@@ -32,7 +32,7 @@ public class Mapper<F, T> {
      *
      * @param findCommon specify if the mapping method should stop at the common parent or when it reaches the {@code Object} class
      */
-    public Mapper(boolean findCommon, Class<F> from, Class<T> to) {
+    Mapper(boolean findCommon, Class<F> from, Class<T> to) {
         this.toClass = to;
 
         if (findCommon) {
@@ -80,15 +80,6 @@ public class Mapper<F, T> {
     }
 
     /**
-     * Specify if the mapping of the object should look for a common class
-     * between the two objects
-     *
-     * @param findCommon
-     *            boolean which specifies if the mapping should look for a
-     *            common class
-     */
-
-    /**
      * This methods maps the values from one type of object to another type of
      * object, the values are being get from the getter methods and are being
      * set using the setter methods.The number of getter methods must be equal
@@ -108,10 +99,10 @@ public class Mapper<F, T> {
 
         return Try.apply(() -> {
             T to = toClass.getConstructor().newInstance();
-            if (history.contains(toClass)) {
-                return null;
+            if (history.containsKey(from)) {
+                return history.get(from);
             }
-            history.add(toClass);
+            history.put(from, to);
 
             map.forEach((field, accessors) -> {
                 Method get = accessors._1;
@@ -143,7 +134,7 @@ public class Mapper<F, T> {
         }).recoverWith(LOG_ERROR::apply).get();
     }
 
-    private static Set<Class<?>> history = new HashSet<>();
+    private Map<F, T> history = new HashMap<>();
 
     /**
      * This methods maps the values from one type of object to another type of

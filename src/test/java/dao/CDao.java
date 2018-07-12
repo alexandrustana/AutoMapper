@@ -7,7 +7,7 @@ package dao;
 public class CDao {
     private int  x;
     private int  y;
-    private BDao b;
+    private CDao c;
 
     public int getX() {
         return x;
@@ -25,12 +25,12 @@ public class CDao {
         this.y = y;
     }
 
-    public BDao getB() {
-        return b;
+    public CDao getC() {
+        return c;
     }
 
-    public void setB(BDao b) {
-        this.b = b;
+    public void setC(CDao c) {
+        this.c = c;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CDao {
         return "CDao{" +
                 "x=" + x +
                 ", y=" + y +
-                ", b=" + b +
+                ", c=" + c +
                 '}';
     }
 }
