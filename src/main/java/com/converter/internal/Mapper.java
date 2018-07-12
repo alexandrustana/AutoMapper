@@ -101,6 +101,11 @@ public class Mapper<F, T> {
      * @throws UndefinedMethodException  when there does not exist a getter for the given field
      */
     public T map(F from) {
+        Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
+            t.printStackTrace();
+            return new Try.Failure<>(t);
+        };
+
         return Try.apply(() -> {
             T to = toClass.getConstructor().newInstance();
             if (history.contains(toClass)) {
@@ -114,7 +119,7 @@ public class Mapper<F, T> {
 
                 Try.apply(() -> {
                     Object value = get.invoke(from);
-                    if (Utilities.isPrimitive(value.getClass())) {
+                    if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {
                         Mapper<Object, ?> mapper = TypeMap.getInstance().getMapper(value.getClass());
@@ -122,11 +127,11 @@ public class Mapper<F, T> {
                         if (mapper == null) {
                             throw new UnmappedType();
                         }
-
-                        set.invoke(to, mapper.map(value));
+                        Object object = mapper.map(value);
+                        set.invoke(to, object);
                     }
                     return Void.TYPE;
-                }).get();
+                }).recoverWith(LOG_ERROR::apply).get();
             });
             return to;
         }).transform(result -> {
@@ -134,8 +139,8 @@ public class Mapper<F, T> {
             return new Try.Success<>(result);
         }, t -> {
             history.clear();
-            throw new RuntimeException(t);
-        }).get();
+            return new Try.Failure<>(t);
+        }).recoverWith(LOG_ERROR::apply).get();
     }
 
     private static Set<Class<?>> history = new HashSet<>();

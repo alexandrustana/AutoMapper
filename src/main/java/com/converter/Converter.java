@@ -13,7 +13,7 @@ public class Converter {
         typeMap = TypeMap.getInstance();
     }
 
-    public static Converter getInstance() {
+    public static Converter instance() {
         if (instance == null) {
             instance = new Converter();
         }
