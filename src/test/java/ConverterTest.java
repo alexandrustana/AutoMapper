@@ -1,12 +1,6 @@
 import com.converter.Converter;
-import dao.ADao;
-import dao.BDao;
-import dao.CDao;
-import dao.DDao;
-import model.AModel;
-import model.BModel;
-import model.CModel;
-import model.DModel;
+import dao.*;
+import model.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -26,6 +20,8 @@ public class ConverterTest {
         converter.addMapping(BModel.class, BDao.class);
         converter.addMapping(CModel.class, CDao.class);
         converter.addMapping(DModel.class, DDao.class);
+        converter.addMapping(EModel.class, EDao.class);
+        converter.addMapping(FModel.class, FDao.class);
     }
 
     @Test
@@ -143,5 +139,58 @@ public class ConverterTest {
         assertEquals(model.getY(), dao.getY());
         assertEquals(model.getC().getX(), dao.getC().getX());
         assertEquals(model.getC().getY(), dao.getC().getY());
+    }
+
+    @Test
+    public void convertEModelToEDaoWithoutObject() {
+        EModel model = new EModel();
+        model.setX(1);
+        model.setY("test");
+
+        EDao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+    }
+
+    @Test
+    public void convertEModelToEDaoWithObject() {
+        DModel d = new DModel();
+        d.setA(2);
+
+        BModel b = new BModel();
+        b.setZ(5);
+
+        AModel a = new AModel();
+        a.setX(3);
+        a.setY(4);
+        a.setB(b);
+
+        EModel model = new EModel();
+        model.setX(1);
+        model.setY("test");
+        model.setD(d);
+        model.setA(a);
+
+        EDao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(model.getY(), dao.getY());
+        assertEquals(model.getD().getA(), dao.getD().getA());
+        assertEquals(model.getA().getX(), dao.getA().getX());
+        assertEquals(model.getA().getY(), dao.getA().getY());
+        assertEquals(model.getA().getB().getZ(), dao.getA().getB().getZ());
+    }
+
+    @Test
+    public void convertEModelToEDaoUsingSuperReferences() {
+        FModel model = new EModel();
+        model.setX(1);
+        ((EModel) model).setY("test");
+
+        FDao dao = converter.map(model);
+
+        assertEquals(model.getX(), dao.getX());
+        assertEquals(((EModel) model).getY(), ((EDao) dao).getY());
     }
 }
