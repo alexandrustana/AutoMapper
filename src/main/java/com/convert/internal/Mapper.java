@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
  * @param <T> To
  */
 public class Mapper<F, T> {
-    private final Map<String, Tuple<Method, Method>> map;
-    private final Class<T>                           toClass;
+    private final Map<Tuple<String, String>, Tuple<Method, Method>> map;
+    private final Class<T>                                          toClass;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
@@ -43,12 +43,12 @@ public class Mapper<F, T> {
         }
     }
 
-    private Map<String, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
+    private Map<Tuple<String, String>, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
         Class<?>    common = parent(from.getClass(), to.getClass());
         List<Field> fields = Arrays.asList(common.getDeclaredFields());
-        List<String> commonFields = fields.stream()
+        List<Tuple<String, String>> commonFields = fields.stream()
                 .filter(field -> field.getAnnotation(Ignore.class) == null)
-                .map(this::getName)
+                .map(f -> Tuple.apply(f.getName(), getName(f)))
                 .collect(Collectors.toList());
 
         return properties(from, to, commonFields);
@@ -59,7 +59,7 @@ public class Mapper<F, T> {
         return alias == null ? field.getName() : alias.name();
     }
 
-    private Map<String, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
+    private Map<Tuple<String, String>, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
         Predicate<Field> isIgnored = field -> field.getAnnotation(Ignore.class) != null;
 
         List<Field> fromFields = getAllFields(from);
@@ -67,23 +67,24 @@ public class Mapper<F, T> {
 
         return properties(from, to, fromFields.stream()
                 .filter(f -> !isIgnored.test(f) && toFields.stream().anyMatch(t -> getName(t).equals(getName(f)) && !isIgnored.test(t)))
-                .map(this::getName)
+                .map(f -> Tuple.apply(f.getName(), getName(f)))
                 .collect(Collectors.toList()));
     }
 
-    private Map<String, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<String> fields) {
+    private Map<Tuple<String, String>, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<Tuple<String, String>> fields) {
         return fields.stream().collect(Collectors.toMap(Function.identity(),
                                                         field -> Tuple.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
                                                                              find(field, Arrays.asList(to.getMethods()), "set"))));
     }
 
-    private Method find(String field, List<Method> methods, String... prefixes) {
+    private Method find(Tuple<String, String> field, List<Method> methods, String... prefixes) {
         BiPredicate<Method, String>          startsWith = (m, p) -> m.getName().startsWith(p);
         TriPredicate<String, Method, String> isAccessor = (f, m, p) -> m.getName().length() == (f.length() + p.length()) && m.getName().toLowerCase().equals((p + f).toLowerCase());
 
         List<Method> result = methods.stream()
                 .filter(method -> Arrays.stream(prefixes)
-                        .anyMatch(prefix -> startsWith.test(method, prefix) && isAccessor.test(field, method, prefix)))
+                        .anyMatch(prefix -> startsWith.test(method, prefix) &&
+                                (isAccessor.test(field._1, method, prefix) || isAccessor.test(field._2, method, prefix))))
                 .collect(Collectors.toList());
 
         return result.get(0);
