@@ -1,6 +1,6 @@
 package converter;
 
-import com.convert.Converter;
+import com.convert.Mapper;
 import converter.dao.*;
 import converter.model.*;
 import org.junit.BeforeClass;
@@ -12,44 +12,44 @@ import static org.junit.Assert.*;
  * @author Alexandru Stana, alexandru.stana@busymachines.com
  * @since 12/07/2018
  */
-public class ConverterTest {
-    private static Converter converter;
+public class MapperTest {
+    private static Mapper mapper;
 
     @BeforeClass
     public static void setup() {
-        converter = Converter.instance();
-        converter.addMapping(AModel.class, ADao.class);
-        converter.addMapping(BModel.class, BDao.class);
-        converter.addMapping(CModel.class, CDao.class);
-        converter.addMapping(DModel.class, DDao.class);
-        converter.addMapping(EModel.class, EDao.class);
-        converter.addMapping(FModel.class, FDao.class);
+        mapper = Mapper.instance();
+        mapper.addMapping(AModel.class, ADao.class);
+        mapper.addMapping(BModel.class, BDao.class);
+        mapper.addMapping(CModel.class, CDao.class);
+        mapper.addMapping(DModel.class, DDao.class);
+        mapper.addMapping(EModel.class, EDao.class);
+        mapper.addMapping(FModel.class, FDao.class);
     }
 
     @Test
-    public void convertDModelToDDao() {
+    public void mapDModelToDDao() {
         DModel model = new DModel();
         model.setA(1);
 
-        DDao dao = converter.map(model);
+        DDao dao = mapper.map(model);
 
         assertEquals(model.getA(), dao.getA());
     }
 
     @Test
-    public void convertAModelToADaoIgnoreB() {
+    public void mapAModelToADaoIgnoreB() {
         AModel model = new AModel();
         model.setX(1);
         model.setY(2);
 
-        ADao dao = converter.map(model);
+        ADao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
     }
 
     @Test
-    public void convertAModelToADaoWithB() {
+    public void mapAModelToADaoWithB() {
         BModel b = new BModel();
         b.setZ(3);
 
@@ -58,7 +58,7 @@ public class ConverterTest {
         model.setY(2);
         model.setB(b);
 
-        ADao dao = converter.map(model);
+        ADao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
@@ -66,7 +66,7 @@ public class ConverterTest {
     }
 
     @Test
-    public void convertInfiniteRecursion() {
+    public void mapInfiniteRecursion() {
         AModel model = new AModel();
         model.setX(0);
 
@@ -75,14 +75,14 @@ public class ConverterTest {
         b.setA(model);
         model.setB(b);
 
-        ADao dao = converter.map(model);
+        ADao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getB().getA().getB().getA().getX(), dao.getB().getA().getB().getA().getX());
     }
 
     @Test
-    public void convertAModelToADao() {
+    public void mapAModelToADao() {
         DModel d = new DModel();
         d.setA(6);
 
@@ -100,7 +100,7 @@ public class ConverterTest {
         model.setY(2);
         model.setB(b);
 
-        ADao dao = converter.map(model);
+        ADao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
@@ -113,19 +113,19 @@ public class ConverterTest {
     }
 
     @Test
-    public void convertCModelToCDao() {
+    public void mapCModelToCDao() {
         CModel model = new CModel();
         model.setX(1);
         model.setY(2);
 
-        CDao dao = converter.map(model);
+        CDao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
     }
 
     @Test
-    public void convertCModelToCDaoRecursive() {
+    public void mapCModelToCDaoRecursive() {
         CModel c = new CModel();
         c.setY(3);
         c.setX(4);
@@ -135,7 +135,7 @@ public class ConverterTest {
         model.setY(2);
         model.setC(c);
 
-        CDao dao = converter.map(model);
+        CDao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
@@ -144,19 +144,19 @@ public class ConverterTest {
     }
 
     @Test
-    public void convertEModelToEDaoWithoutObject() {
+    public void mapEModelToEDaoWithoutObject() {
         EModel model = new EModel();
         model.setX(1);
         model.setY("test");
 
-        EDao dao = converter.map(model);
+        EDao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
     }
 
     @Test
-    public void convertEModelToEDaoWithObject() {
+    public void mapEModelToEDaoWithObject() {
         DModel d = new DModel();
         d.setA(2);
 
@@ -174,7 +174,7 @@ public class ConverterTest {
         model.setD(d);
         model.setA(a);
 
-        EDao dao = converter.map(model);
+        EDao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(model.getY(), dao.getY());
@@ -185,12 +185,12 @@ public class ConverterTest {
     }
 
     @Test
-    public void convertEModelToEDaoUsingSuperReferences() {
+    public void mapEModelToEDaoUsingSuperReferences() {
         FModel model = new EModel();
         model.setX(1);
         ((EModel) model).setY("test");
 
-        FDao dao = converter.map(model);
+        FDao dao = mapper.map(model);
 
         assertEquals(model.getX(), dao.getX());
         assertEquals(((EModel) model).getY(), ((EDao) dao).getY());

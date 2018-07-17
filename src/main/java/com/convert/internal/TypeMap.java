@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class TypeMap {
 
-    private final Map<Class<?>, Mapper<?, ?>> typeMapper;
+    private final Map<Class<?>, Converter<?, ?>> typeMapper;
 
     private static TypeMap instance;
 
@@ -21,16 +21,16 @@ public class TypeMap {
     }
 
     public <F, T> void addType(Class<F> from, Class<T> to, boolean reverse) {
-        typeMapper.put(from, new Mapper<>(from, to));
+        typeMapper.put(from, new Converter<>(from, to));
         if (reverse) {
-            typeMapper.put(to, new Mapper<>(to, from));
+            typeMapper.put(to, new Converter<>(to, from));
         }
     }
 
-    public <F, T> Mapper<F, T> getMapper(Class<T> from) {
+    public <F, T> Converter<F, T> getMapper(Class<T> from) {
         @SuppressWarnings("unchecked")
-        Mapper<F, T> mapper = ((Mapper<F, T>) typeMapper.get(from));
-        return mapper;
+        Converter<F, T> converter = ((Converter<F, T>) typeMapper.get(from));
+        return converter;
     }
 
 }

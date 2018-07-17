@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
  * @param <F> From
  * @param <T> To
  */
-public class Mapper<F, T> {
+public class Converter<F, T> {
     private final Map<Tuple<String, String>, Tuple<Method, Method>> map;
     private final Class<T>                                          toClass;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
      */
-    Mapper(Class<F> from, Class<T> to) {
+    Converter(Class<F> from, Class<T> to) {
         this.toClass = to;
 
         map = different(from, to);
@@ -102,12 +102,12 @@ public class Mapper<F, T> {
                     if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {
-                        Mapper<Object, ?> mapper = TypeMap.getInstance().getMapper(value.getClass());
+                        Converter<Object, ?> converter = TypeMap.getInstance().getMapper(value.getClass());
 
-                        if (mapper == null) {
+                        if (converter == null) {
                             throw new UnmappedType();
                         }
-                        Object object = mapper.map(value);
+                        Object object = converter.map(value);
                         set.invoke(to, object);
                     }
                     return Void.TYPE;

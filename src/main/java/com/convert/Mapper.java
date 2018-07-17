@@ -1,21 +1,21 @@
 package com.convert;
 
 import com.convert.exceptions.UnmappedType;
-import com.convert.internal.Mapper;
+import com.convert.internal.Converter;
 import com.convert.internal.TypeMap;
 
-public class Converter {
+public class Mapper {
 
-    private static Converter instance;
-    private        TypeMap   typeMap;
+    private static Mapper  instance;
+    private        TypeMap typeMap;
 
-    private Converter() {
+    private Mapper() {
         typeMap = TypeMap.getInstance();
     }
 
-    public static Converter instance() {
+    public static Mapper instance() {
         if (instance == null) {
-            instance = new Converter();
+            instance = new Mapper();
         }
         return instance;
     }
@@ -30,10 +30,10 @@ public class Converter {
 
     @SuppressWarnings("unchecked")
     public <F, T> T map(F from) {
-        Mapper<F, T> mapper = (Mapper<F, T>) typeMap.getMapper(from.getClass());
-        if (mapper == null) {
+        Converter<F, T> converter = (Converter<F, T>) typeMap.getMapper(from.getClass());
+        if (converter == null) {
             throw new UnmappedType();
         }
-        return mapper.map(from);
+        return converter.map(from);
     }
 }

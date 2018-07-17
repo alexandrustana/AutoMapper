@@ -2,7 +2,7 @@ package annotations.ignore;
 
 import annotations.ignore.dao.ADao;
 import annotations.ignore.model.AModel;
-import com.convert.Converter;
+import com.convert.Mapper;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -14,11 +14,11 @@ import static org.junit.Assert.assertNotEquals;
  * @since 15/07/2018
  */
 public class IgnoreTest {
-    private static Converter converter;
+    private static Mapper converter;
 
     @BeforeClass
     public static void setup() {
-        converter = Converter.instance();
+        converter = Mapper.instance();
         converter.addMapping(AModel.class, ADao.class);
     }
 
