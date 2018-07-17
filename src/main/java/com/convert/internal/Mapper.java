@@ -2,8 +2,6 @@ package com.convert.internal;
 
 import com.convert.annotations.Alias;
 import com.convert.annotations.Ignore;
-import com.convert.exceptions.CommonSuperClassException;
-import com.convert.exceptions.UndefinedMethodException;
 import com.convert.exceptions.UnmappedType;
 import com.convert.internal.utils.TriPredicate;
 import com.convert.internal.utils.Tuple;
@@ -81,9 +79,6 @@ public class Mapper<F, T> {
      *
      * @param from the object which you want to convert
      * @return the object which has the values set
-     * @throws CommonSuperClassException when there is no common super class for the two classes,
-     *                                   other than the Object class
-     * @throws UndefinedMethodException  when there does not exist a getter for the given field
      */
     public T map(F from) {
         Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
@@ -139,9 +134,6 @@ public class Mapper<F, T> {
      *
      * @param from the object which you want to convert
      * @return a list of objects which have the values set
-     * @throws CommonSuperClassException when there is no common super class for the two classes,
-     *                                   other than the Object class
-     * @throws UndefinedMethodException  when there does not exist a getter for the given field
      */
     public List<T> map(List<F> from) {
         List<T> t = new ArrayList<>();
