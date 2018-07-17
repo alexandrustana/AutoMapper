@@ -1,4 +1,4 @@
-package com.convert.internal;
+package com.core;
 
 import com.convert.annotations.Alias;
 import com.convert.annotations.Ignore;
@@ -25,12 +25,14 @@ import java.util.stream.Collectors;
 public class Converter<F, T> {
     private final Map<Tuple<String, String>, Tuple<Method, Method>> map;
     private final Class<T>                                          toClass;
+    private final TypeMap                                           typeMap;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
      */
-    Converter(Class<F> from, Class<T> to) {
+    public Converter(Class<F> from, Class<T> to, TypeMap typeMap) {
         this.toClass = to;
+        this.typeMap = typeMap;
 
         map = different(from, to);
     }
@@ -102,7 +104,7 @@ public class Converter<F, T> {
                     if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {
-                        Converter<Object, ?> converter = TypeMap.getInstance().getMapper(value.getClass());
+                        Converter<Object, ?> converter = typeMap.getMapper(value.getClass());
 
                         if (converter == null) {
                             throw new UnmappedType();

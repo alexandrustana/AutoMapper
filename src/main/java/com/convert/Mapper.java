@@ -1,8 +1,9 @@
 package com.convert;
 
 import com.convert.exceptions.UnmappedType;
-import com.convert.internal.Converter;
-import com.convert.internal.TypeMap;
+import com.convert.internal.StrongTypeMap;
+import com.core.Converter;
+import com.core.TypeMap;
 
 public class Mapper {
 
@@ -10,7 +11,7 @@ public class Mapper {
     private        TypeMap typeMap;
 
     private Mapper() {
-        typeMap = TypeMap.getInstance();
+        typeMap = StrongTypeMap.getInstance();
     }
 
     public static Mapper instance() {
