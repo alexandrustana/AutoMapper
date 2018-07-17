@@ -20,10 +20,10 @@ public class TypeMap {
         return instance;
     }
 
-    public <F, T> void addType(Class<F> from, Class<T> to, boolean reverse, boolean findCommonParent) {
-        typeMapper.put(from, new Mapper<>(findCommonParent, from, to));
+    public <F, T> void addType(Class<F> from, Class<T> to, boolean reverse) {
+        typeMapper.put(from, new Mapper<>(from, to));
         if (reverse) {
-            typeMapper.put(to, new Mapper<>(findCommonParent, to, from));
+            typeMapper.put(to, new Mapper<>(to, from));
         }
     }
 

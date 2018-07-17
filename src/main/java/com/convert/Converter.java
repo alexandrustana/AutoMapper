@@ -20,12 +20,12 @@ public class Converter {
         return instance;
     }
 
-    public <F, T> void addMapping(Class<F> from, Class<T> to, boolean mapBothways, boolean findCommonSuper) {
-        typeMap.addType(from, to, mapBothways, findCommonSuper);
+    public <F, T> void addMapping(Class<F> from, Class<T> to, boolean reverse) {
+        typeMap.addType(from, to, reverse);
     }
 
     public <F, T> void addMapping(Class<F> from, Class<T> to) {
-        typeMap.addType(from, to, false, false);
+        typeMap.addType(from, to, false);
     }
 
     @SuppressWarnings("unchecked")

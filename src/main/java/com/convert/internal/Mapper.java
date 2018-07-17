@@ -30,28 +30,11 @@ public class Mapper<F, T> {
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
-     *
-     * @param findCommon specify if the mapping method should stop at the common parent or when it reaches the {@code Object} class
      */
-    Mapper(boolean findCommon, Class<F> from, Class<T> to) {
+    Mapper(Class<F> from, Class<T> to) {
         this.toClass = to;
 
-        if (findCommon) {
-            map = common(from, to);
-        } else {
-            map = different(from, to);
-        }
-    }
-
-    private Map<Tuple<String, String>, Tuple<Method, Method>> common(Class<F> from, Class<T> to) {
-        Class<?>    common = parent(from.getClass(), to.getClass());
-        List<Field> fields = Arrays.asList(common.getDeclaredFields());
-        List<Tuple<String, String>> commonFields = fields.stream()
-                .filter(field -> field.getAnnotation(Ignore.class) == null)
-                .map(f -> Tuple.apply(f.getName(), getName(f)))
-                .collect(Collectors.toList());
-
-        return properties(from, to, commonFields);
+        map = different(from, to);
     }
 
     private String getName(Field field) {
@@ -186,26 +169,5 @@ public class Mapper<F, T> {
         }
 
         return fields;
-    }
-
-    /**
-     * Method which finds the common parent for the classes given as parameters
-     *
-     * @param from the class from which the values will be mapped
-     * @param to   the class on which the values will be mapped
-     * @return the common super class for the two class, if there is no common super class then {@code Class<Void>} will be returned
-     */
-    private Class<?> parent(Class<?> from, Class<?> to) {
-        if (from.equals(to)) {
-            return from;
-        } else if (!from.equals(Object.class) && !to.equals(Object.class)) {
-            Class<?> left = parent(from.getSuperclass(), to);
-            if (left.equals(Void.TYPE)) {
-                return parent(from, to.getSuperclass());
-            } else {
-                return left;
-            }
-        }
-        return Void.TYPE;
     }
 }
