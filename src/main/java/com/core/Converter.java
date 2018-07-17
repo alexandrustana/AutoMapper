@@ -104,7 +104,7 @@ public class Converter<F, T> {
                     if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {
-                        Converter<Object, ?> converter = typeMap.getMapper(value.getClass());
+                        Converter<Object, ?> converter = typeMap.getConverter(value.getClass());
 
                         if (converter == null) {
                             throw new UnmappedType();

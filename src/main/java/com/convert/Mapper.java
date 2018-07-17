@@ -31,10 +31,8 @@ public class Mapper {
 
     @SuppressWarnings("unchecked")
     public <F, T> T map(F from) {
-        Converter<F, T> converter = (Converter<F, T>) typeMap.getMapper(from.getClass());
-        if (converter == null) {
-            throw new UnmappedType();
-        }
+        Converter<F, T> converter = (Converter<F, T>) typeMap.getConverter(from.getClass());
+
         return converter.map(from);
     }
 }
