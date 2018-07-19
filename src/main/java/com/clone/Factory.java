@@ -24,10 +24,6 @@ public class Factory {
         return instance;
     }
 
-    private <F, T> void addMapping(Class<F> from, Class<T> to) {
-        typeMap.addType(from, to, false);
-    }
-
     @SuppressWarnings("unchecked")
     public <F> F copy(F object) {
         Converter<F, F> converter = (Converter<F, F>) typeMap.getConverter(object.getClass());
