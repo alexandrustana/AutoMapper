@@ -32,6 +32,6 @@ public class Mapper {
     public <F, T> T map(F from) {
         Converter<F, T> converter = (Converter<F, T>) typeMap.getConverter(from.getClass());
 
-        return converter.map(from);
+        return converter.convert(from);
     }
 }

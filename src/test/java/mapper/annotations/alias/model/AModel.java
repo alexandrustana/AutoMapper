@@ -1,6 +1,6 @@
 package mapper.annotations.alias.model;
 
-import com.convert.annotations.Alias;
+import com.core.annotations.Alias;
 
 /**
  * @author Alexandru Stana, alexandru.stana@busymachines.com

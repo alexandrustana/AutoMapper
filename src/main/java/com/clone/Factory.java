@@ -27,6 +27,6 @@ public class Factory {
     @SuppressWarnings("unchecked")
     public <F> F copy(F object) {
         Converter<F, F> converter = (Converter<F, F>) typeMap.getConverter(object.getClass());
-        return converter.map(object);
+        return converter.convert(object);
     }
 }

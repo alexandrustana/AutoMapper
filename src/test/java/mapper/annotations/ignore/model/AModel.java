@@ -1,6 +1,6 @@
 package mapper.annotations.ignore.model;
 
-import com.convert.annotations.Ignore;
+import com.core.annotations.Ignore;
 
 /**
  * @author Alexandru Stana, alexandru.stana@busymachines.com

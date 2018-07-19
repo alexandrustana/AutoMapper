@@ -1,11 +1,11 @@
 package com.core;
 
-import com.convert.annotations.Alias;
-import com.convert.annotations.Ignore;
 import com.convert.exceptions.UnmappedType;
 import com.convert.internal.utils.TriPredicate;
 import com.convert.internal.utils.Tuple;
 import com.convert.internal.utils.Utilities;
+import com.core.annotations.Alias;
+import com.core.annotations.Ignore;
 import com.lambdista.util.Try;
 
 import java.lang.reflect.Field;
@@ -28,7 +28,7 @@ public class Converter<F, T> {
     private final TypeMap                                           typeMap;
 
     /**
-     * Constructor used to initialize the variables which will be used when the method {@code public T map(F from)} is called
+     * Constructor used to initialize the variables which will be used when the method {@code public T convert(F from)} is called
      */
     public Converter(Class<F> from, Class<T> to, TypeMap typeMap) {
         this.toClass = to;
@@ -82,7 +82,7 @@ public class Converter<F, T> {
      * @param from the object which you want to convert
      * @return the object which has the values set
      */
-    public T map(F from) {
+    public T convert(F from) {
         Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
             t.printStackTrace();
             return new Try.Failure<>(t);
@@ -109,7 +109,7 @@ public class Converter<F, T> {
                         if (converter == null) {
                             throw new UnmappedType();
                         }
-                        Object object = converter.map(value);
+                        Object object = converter.convert(value);
                         set.invoke(to, object);
                     }
                     return Void.TYPE;
@@ -126,26 +126,6 @@ public class Converter<F, T> {
     }
 
     private Map<F, T> history = new HashMap<>();
-
-    /**
-     * This methods maps the values from one type of object to another type of
-     * object, the values are being get from the getter methods and are being
-     * set using the setter methods.The number of getter methods must be equal
-     * to the number of setter methods. Modification can be made to ignore the
-     * common superclass but then the number
-     *
-     * @param from the object which you want to convert
-     * @return a list of objects which have the values set
-     */
-    public List<T> map(List<F> from) {
-        List<T> t = new ArrayList<>();
-
-        for (F f : from) {
-            t.add(map(f));
-        }
-
-        return t;
-    }
 
     /**
      * It returns all the objects fields, from its class and all its
