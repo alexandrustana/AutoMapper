@@ -5,7 +5,6 @@ import com.core.Converter;
 import com.core.TypeMap;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class StrongTypeMap extends TypeMap {
 

@@ -1,6 +1,5 @@
 package com.convert;
 
-import com.convert.exceptions.UnmappedType;
 import com.convert.internal.StrongTypeMap;
 import com.core.Converter;
 import com.core.TypeMap;

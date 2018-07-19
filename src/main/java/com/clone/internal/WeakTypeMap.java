@@ -29,8 +29,8 @@ public class WeakTypeMap extends TypeMap {
     public <F, T> Converter<F, T> getConverter(Class<T> from) {
         Converter<F, T> converter = ((Converter<F, T>) map.get(from));
         if (converter == null) {
-            addType(from.getClass(), from.getClass(), false);
-            converter = (Converter<F, T>) getConverter(from.getClass());
+            addType(from, from, false);
+            converter = getConverter(from);
         }
         return converter;
     }

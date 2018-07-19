@@ -34,7 +34,7 @@ public class Converter<F, T> {
         this.toClass = to;
         this.typeMap = typeMap;
 
-        map = different(from, to);
+        map = associate(from, to);
     }
 
     private String getName(Field field) {
@@ -42,11 +42,11 @@ public class Converter<F, T> {
         return alias == null ? field.getName() : alias.name();
     }
 
-    private Map<Tuple<String, String>, Tuple<Method, Method>> different(Class<F> from, Class<T> to) {
+    private Map<Tuple<String, String>, Tuple<Method, Method>> associate(Class<F> from, Class<T> to) {
         Predicate<Field> isIgnored = field -> field.getAnnotation(Ignore.class) != null;
 
-        List<Field> fromFields = getAllFields(from);
-        List<Field> toFields   = getAllFields(to);
+        Set<Field> fromFields = getAllFields(from);
+        Set<Field> toFields   = getAllFields(to);
 
         return properties(from, to, fromFields.stream()
                 .filter(f -> !isIgnored.test(f) && toFields.stream().anyMatch(t -> getName(t).equals(getName(f)) && !isIgnored.test(t)))
@@ -154,8 +154,8 @@ public class Converter<F, T> {
      * @param clazz object from which the fields to be returned
      * @return the list of fields of the given object
      */
-    private List<Field> getAllFields(Class<?> clazz) {
-        List<Field> fields = new ArrayList<>();
+    private Set<Field> getAllFields(Class<?> clazz) {
+        Set<Field> fields = new HashSet<>();
 
         while (clazz != Object.class) {
             fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
