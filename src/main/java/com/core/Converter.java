@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * @param <F> From
  * @param <T> To
  */
-public class Converter<F, T> {
+public final class Converter<F, T> {
     private final Map<Tuple<String, String>, Tuple<Method, Method>> map;
     private final Class<T>                                          toClass;
     private final TypeMap                                           typeMap;
@@ -30,7 +30,7 @@ public class Converter<F, T> {
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T convert(F from)} is called
      */
-    public Converter(Class<F> from, Class<T> to, TypeMap typeMap) {
+    Converter(Class<F> from, Class<T> to, TypeMap typeMap) {
         this.toClass = to;
         this.typeMap = typeMap;
 
@@ -73,16 +73,21 @@ public class Converter<F, T> {
         return result.get(0);
     }
 
+    public T convert(F from) {
+        return convert(from, null);
+    }
+
     /**
      * This methods maps the values from one type of object to another type of
      * object, the values are being get from the getter methods and are being
      * set using the setter methods.The number of getter methods must be equal
      * to the number of setter methods.
      *
-     * @param from the object which you want to convert
+     * @param from    the object which you want to convert
+     * @param replace map which holds as key variable names and as values the value which should be put in the variable
      * @return the object which has the values set
      */
-    public T convert(F from) {
+    public T convert(F from, Map<String, Object> replace) {
         Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
             t.printStackTrace();
             return new Try.Failure<>(t);
@@ -100,7 +105,12 @@ public class Converter<F, T> {
                 Method set = accessors._2;
 
                 Try.apply(() -> {
-                    Object value = get.invoke(from);
+                    Object value;
+                    if (replace != null && (replace.get(field._1) != null || replace.get(field._2) != null)) {
+                        value = replace.get(field._1) == null ? replace.get(field._2) : replace.get(field._1);
+                    } else {
+                        value = get.invoke(from);
+                    }
                     if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {

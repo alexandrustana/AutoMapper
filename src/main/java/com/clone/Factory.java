@@ -4,6 +4,8 @@ import com.clone.internal.WeakTypeMap;
 import com.core.Converter;
 import com.core.TypeMap;
 
+import java.util.Map;
+
 /**
  * @author Alexandru Stana, alexandru.stana@busymachines.com
  * @since 17/07/2018
@@ -28,5 +30,11 @@ public class Factory {
     public <F> F copy(F object) {
         Converter<F, F> converter = (Converter<F, F>) typeMap.getConverter(object.getClass());
         return converter.convert(object);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F> F copy(F object, Map<String, Object> replace) {
+        Converter<F, F> converter = (Converter<F, F>) typeMap.getConverter(object.getClass());
+        return converter.convert(object, replace);
     }
 }
