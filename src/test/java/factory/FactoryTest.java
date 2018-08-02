@@ -5,10 +5,6 @@ import factory.model.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -25,7 +21,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyDModelToDDao() {
+    public void copyDModel() {
         DModel model = new DModel();
         model.setA(1);
 
@@ -35,7 +31,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyAModelToADaoIgnoreB() {
+    public void copyAModelIgnoreB() {
         AModel model = new AModel();
         model.setX(1);
         model.setY(2);
@@ -47,7 +43,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyAModelToADaoWithB() {
+    public void copyAModelWithB() {
         BModel b = new BModel();
         b.setZ(3);
 
@@ -80,7 +76,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyAModelToAModel() {
+    public void copyAModel() {
         DModel d = new DModel();
         d.setA(6);
 
@@ -111,7 +107,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyCModelToCModel() {
+    public void copyCModel() {
         CModel model = new CModel();
         model.setX(1);
         model.setY(2);
@@ -123,7 +119,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyCModelToCModelRecursive() {
+    public void copyCModelRecursive() {
         CModel c = new CModel();
         c.setY(3);
         c.setX(4);
@@ -142,7 +138,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyEModelToEModelWithoutObject() {
+    public void copyEModelWithoutObject() {
         EModel model = new EModel();
         model.setX(1);
         model.setY("test");
@@ -154,7 +150,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyEModelToEModelWithObject() {
+    public void copyEModelWithObject() {
         DModel d = new DModel();
         d.setA(2);
 
@@ -183,7 +179,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void copyEModelToEModelUsingSuperReferences() {
+    public void copyEModelUsingSuperReferences() {
         FModel model = new EModel();
         model.setX(1);
         ((EModel) model).setY("test");
