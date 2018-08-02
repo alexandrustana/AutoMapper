@@ -1,12 +1,11 @@
 package com.clone;
 
 import com.clone.internal.WeakTypeMap;
-import com.convert.internal.utils.Tuple;
+import com.convert.internal.utils.tuple.Arity2;
+import com.convert.internal.utils.tuple.Tuple;
 import com.core.Converter;
 import com.core.TypeMap;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,7 +35,7 @@ public class Factory {
     }
 
     @SuppressWarnings("unchecked")
-    public <F> F copy(F object, Set<Tuple<String, Object>> replace) {
+    public <F> F copy(F object, Set<Arity2<String, Object>> replace) {
         Converter<F, F> converter = (Converter<F, F>) typeMap.getConverter(object.getClass());
         return converter.convert(object, replace);
     }

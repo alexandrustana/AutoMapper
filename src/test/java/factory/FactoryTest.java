@@ -1,18 +1,14 @@
 package factory;
 
 import com.clone.Factory;
-import com.convert.internal.utils.Tuple;
+import com.convert.internal.utils.tuple.Arity2;
+import com.convert.internal.utils.tuple.Tuple;
 import factory.model.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -45,7 +41,7 @@ public class FactoryTest {
         DModel model = new DModel();
         model.setA(1);
 
-        DModel copy = factory.copy(model, new HashSet<>(Collections.singletonList(Tuple.apply("a", 2))));
+        DModel copy = factory.copy(model, new HashSet<>(Collections.singletonList(Arity2.apply("a", 2))));
 
         assertNotEquals(model.getA(), copy.getA());
         assertEquals(copy.getA(), 2);

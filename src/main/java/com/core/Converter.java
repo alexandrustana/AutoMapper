@@ -2,7 +2,8 @@ package com.core;
 
 import com.convert.exceptions.UnmappedType;
 import com.convert.internal.utils.TriPredicate;
-import com.convert.internal.utils.Tuple;
+import com.convert.internal.utils.tuple.Arity2;
+import com.convert.internal.utils.tuple.Arity2;
 import com.convert.internal.utils.Utilities;
 import com.core.annotations.Alias;
 import com.core.annotations.Ignore;
@@ -24,9 +25,9 @@ import java.util.stream.Collectors;
  * @param <T> To
  */
 public final class Converter<F, T> {
-    private final Map<Tuple<String, String>, Tuple<Method, Method>> map;
-    private final Class<T>                                          toClass;
-    private final TypeMap                                           typeMap;
+    private final Map<Arity2<String, String>, Arity2<Method, Method>> map;
+    private final Class<T>                                            toClass;
+    private final TypeMap                                             typeMap;
 
     /**
      * Constructor used to initialize the variables which will be used when the method {@code public T convert(F from)} is called
@@ -43,7 +44,7 @@ public final class Converter<F, T> {
         return alias == null ? field.getName() : alias.name();
     }
 
-    private Map<Tuple<String, String>, Tuple<Method, Method>> associate(Class<F> from, Class<T> to) {
+    private Map<Arity2<String, String>, Arity2<Method, Method>> associate(Class<F> from, Class<T> to) {
         Predicate<Field> isIgnored = field -> field.getAnnotation(Ignore.class) != null;
 
         Set<Field> fromFields = getAllFields(from);
@@ -51,17 +52,17 @@ public final class Converter<F, T> {
 
         return properties(from, to, fromFields.stream()
                 .filter(f -> !isIgnored.test(f) && toFields.stream().anyMatch(t -> getName(t).equals(getName(f)) && !isIgnored.test(t)))
-                .map(f -> Tuple.apply(f.getName(), getName(f)))
+                .map(f -> Arity2.apply(f.getName(), getName(f)))
                 .collect(Collectors.toList()));
     }
 
-    private Map<Tuple<String, String>, Tuple<Method, Method>> properties(Class<F> from, Class<T> to, List<Tuple<String, String>> fields) {
+    private Map<Arity2<String, String>, Arity2<Method, Method>> properties(Class<F> from, Class<T> to, List<Arity2<String, String>> fields) {
         return fields.stream().collect(Collectors.toMap(Function.identity(),
-                                                        field -> Tuple.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
-                                                                             find(field, Arrays.asList(to.getMethods()), "set"))));
+                                                        field -> Arity2.apply(find(field, Arrays.asList(from.getMethods()), "get", "is"),
+                                                                              find(field, Arrays.asList(to.getMethods()), "set"))));
     }
 
-    private Method find(Tuple<String, String> field, List<Method> methods, String... prefixes) {
+    private Method find(Arity2<String, String> field, List<Method> methods, String... prefixes) {
         BiPredicate<Method, String>          startsWith = (m, p) -> m.getName().startsWith(p);
         TriPredicate<String, Method, String> isAccessor = (f, m, p) -> m.getName().length() == (f.length() + p.length()) && m.getName().toLowerCase().equals((p + f).toLowerCase());
 
@@ -88,13 +89,16 @@ public final class Converter<F, T> {
      * @param replace map which holds as key variable names and as values the value which should be put in the variable
      * @return the object which has the values set
      */
-    public T convert(F from, Set<Tuple<String, Object>> replace) {
+    public T convert(F from, Set<Arity2<String, Object>> replace) {
         Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
             t.printStackTrace();
             return new Try.Failure<>(t);
         };
-        BiFunction<Set<Tuple<String, Object>>, String, Optional<Object>>                contains = (s, f) -> s.stream().filter(v -> v._1.equals(f)).map(v -> v._2).findFirst();
-        BiFunction<Set<Tuple<String, Object>>, Tuple<String, String>, Optional<Object>> find     = (s, t) -> contains.apply(s, t._1).or(() -> contains.apply(s, t._2));
+        BiFunction<Set<Arity2<String, Object>>, String, Optional<Object>> contains = (s, f) -> {
+            if (s == null) { return Optional.empty(); }
+            return s.stream().filter(v -> v._1.equals(f)).map(v -> v._2).findFirst();
+        };
+        BiFunction<Set<Arity2<String, Object>>, Arity2<String, String>, Optional<Object>> find = (s, t) -> contains.apply(s, t._1).or(() -> contains.apply(s, t._2));
 
         return Try.apply(() -> {
             T to = toClass.getConstructor().newInstance();
