@@ -2,7 +2,6 @@ package factory;
 
 import com.clone.Factory;
 import com.convert.internal.utils.tuple.Arity2;
-import com.convert.internal.utils.tuple.Tuple;
 import factory.model.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,9 +9,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.HashSet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Alexandru Stana, alexandru.stana@busymachines.com
@@ -74,6 +71,27 @@ public class FactoryTest {
         assertEquals(model.getX(), copy.getX());
         assertEquals(model.getY(), copy.getY());
         assertEquals(model.getB().getZ(), copy.getB().getZ());
+    }
+
+    @Test
+    public void copyAModelModifyB() {
+        BModel b = new BModel();
+        b.setZ(3);
+
+        AModel model = new AModel();
+        model.setX(1);
+        model.setY(2);
+        model.setB(b);
+
+        BModel newB = new BModel();
+        newB.setZ(4);
+
+        AModel copy = factory.copy(model, new HashSet<>(Collections.singletonList(Arity2.apply("b", newB))));
+
+        assertEquals(model.getX(), copy.getX());
+        assertEquals(model.getY(), copy.getY());
+        assertNotEquals(model.getB().getZ(), copy.getB().getZ());
+        assertEquals(4, copy.getB().getZ());
     }
 
     @Test
