@@ -11,6 +11,7 @@ import com.lambdista.util.Try;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -87,11 +88,13 @@ public final class Converter<F, T> {
      * @param replace map which holds as key variable names and as values the value which should be put in the variable
      * @return the object which has the values set
      */
-    public T convert(F from, Map<String, Object> replace) {
+    public T convert(F from, Set<Tuple<String, Object>> replace) {
         Function<Throwable, Try.Failure<T>> LOG_ERROR = t -> {
             t.printStackTrace();
             return new Try.Failure<>(t);
         };
+        BiFunction<Set<Tuple<String, Object>>, String, Optional<Object>>                contains = (s, f) -> s.stream().filter(v -> v._1.equals(f)).map(v -> v._2).findFirst();
+        BiFunction<Set<Tuple<String, Object>>, Tuple<String, String>, Optional<Object>> find     = (s, t) -> contains.apply(s, t._1).or(() -> contains.apply(s, t._2));
 
         return Try.apply(() -> {
             T to = toClass.getConstructor().newInstance();
@@ -105,12 +108,7 @@ public final class Converter<F, T> {
                 Method set = accessors._2;
 
                 Try.apply(() -> {
-                    Object value;
-                    if (replace != null && (replace.get(field._1) != null || replace.get(field._2) != null)) {
-                        value = replace.get(field._1) == null ? replace.get(field._2) : replace.get(field._1);
-                    } else {
-                        value = get.invoke(from);
-                    }
+                    Object value = find.apply(replace, field).orElse(get.invoke(from));
                     if (value == null || Utilities.isPrimitive(value.getClass())) {
                         set.invoke(to, value);
                     } else {
