@@ -13,13 +13,15 @@ The features described above are offered by two different entities, `Mapper` and
 
 The mapper can be used for transfering data from one object to another.
 
-##### Basic usage
+#### Basic usage
 
-First we should create an instance of our `Mapper`, this can be done in the following way
+First we should have an instance of our `Mapper` in our scope, this can be done in the following way
 ```java
 private static Mapper mapper = Mapper.instance();
 ```
-we define it as `static` because it seems like a good ideea to have only one instance of the `Mapper` throughout our entire application. Next we should define the POJO from which we want to transfer the data.
+this will make our usage of the `Mapper` less verbose. 
+
+Next we should define the POJOs from which we want to transfer the data.
 <table>
 <thead>
 <tr>
@@ -59,11 +61,11 @@ class B {
 </tbody>
 </table>
 
-Having the POJOs defined and the `Mapper` instantiated the only remaining step before using the mapper is to explicitly add the mapping:
+Having the POJOs defined the only remaining step before using the mapper is to explicitly add the mapping we wish
 ```java
 mapper.addMapping(A.class, B.class);
 ```
-Now that we have all set up we can use the mapper in the following way:
+Now that we have all set up we can use the mapper in the following way
 ```java
 A a = new A();
 a.setX(1);
@@ -72,7 +74,34 @@ B b = mapper.map(a);
 ```
 
 And *voilà* the `x` attribute from `B` has the same value as the `x` attribute from `A`. 
+```java
+assertEquals(a.getX(), b.getX());
+```
 
 ### Factory
 
-WIP ...
+Using the `Factory` is little easier because you don't have to specify any mapping between classes. 
+
+This being said we could start by having an instance of the factory in the scope
+```java
+private static Factory factory = Factory.instance();
+```
+In order to use the factory we must define a class
+```java
+class C {
+	private String y;
+    public String getY() { return y; }
+    public void setY(String y) { this.y = y; }
+}
+```
+Having the model defined, we can use the factory in the following way
+```java
+C c = new C();
+c.setY("foo");
+
+C cCopy = factory.copy(c);
+```
+At this point `cCopy` is an exact replica of `c`.
+```java
+assertEquals(c.getY(), cCopy.getY());
+```
